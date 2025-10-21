@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 func TestLimitMatches(t *testing.T) {

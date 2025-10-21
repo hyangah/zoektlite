@@ -26,9 +26,9 @@ import (
 	"github.com/cespare/xxhash/v2"
 	"github.com/grafana/regexp"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/internal/syntaxutil"
-	"github.com/sourcegraph/zoekt/query"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/internal/syntaxutil"
+	"github.com/hyangah/zoektlite/query"
 )
 
 // A docIterator iterates over documents in order.

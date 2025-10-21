@@ -1,4 +1,4 @@
-package zoekt
+package zoektlite
 
 import (
 	"bytes"

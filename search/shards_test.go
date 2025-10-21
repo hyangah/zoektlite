@@ -37,10 +37,10 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/regexp"
 
-	"github.com/sourcegraph/zoekt/index"
+	"github.com/hyangah/zoektlite/index"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/query"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/query"
 )
 
 func TestMain(m *testing.M) {

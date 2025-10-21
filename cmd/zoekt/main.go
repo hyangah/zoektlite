@@ -30,10 +30,10 @@ import (
 
 	"github.com/felixge/fgprof"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/index"
-	"github.com/sourcegraph/zoekt/query"
-	"github.com/sourcegraph/zoekt/search"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/index"
+	"github.com/hyangah/zoektlite/query"
+	"github.com/hyangah/zoektlite/search"
 )
 
 func displayMatches(files []zoekt.FileMatch, pat string, withRepo bool, list bool) {

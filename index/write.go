@@ -24,9 +24,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/sourcegraph/zoekt"
-
 	"github.com/RoaringBitmap/roaring"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 func (w *writer) writeTOC(toc *indexTOC) {

@@ -1,12 +1,12 @@
 package index
 
-import "github.com/sourcegraph/zoekt"
+import zoekt "github.com/hyangah/zoektlite"
 
 // Document holds a document (file) to index.
 type Document struct {
 	Name              string
 	Content           []byte
-	Branches          []string
+	Branches          []string // TODO(hyangah): find when to use multiple branches.
 	SubRepositoryPath string
 	Language          string
 	Category          FileCategory

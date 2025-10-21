@@ -25,8 +25,8 @@ import (
 	"slices"
 	"unicode/utf8"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/query"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/query"
 )
 
 // indexData holds the pattern-independent data that we have to have

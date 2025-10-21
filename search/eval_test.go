@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/index"
-	"github.com/sourcegraph/zoekt/query"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/index"
+	"github.com/hyangah/zoektlite/query"
 )
 
 func TestSearchTypeRepo(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/index"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/index"
 )
 
 // collectSender is a sender that will aggregate results. Once sending is

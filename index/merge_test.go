@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 // We compare 2 simple shards before and after the transformation

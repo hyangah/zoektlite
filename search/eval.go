@@ -3,8 +3,8 @@ package search
 import (
 	"context"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/query"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/query"
 )
 
 // typeRepoSearcher evaluates all type:repo sub-queries before sending the query

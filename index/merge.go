@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 // Merge files into a compound shard in dstDir. Merge returns tmpName and a

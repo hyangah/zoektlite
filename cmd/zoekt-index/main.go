@@ -27,8 +27,8 @@ import (
 
 	"go.uber.org/automaxprocs/maxprocs"
 
-	"github.com/sourcegraph/zoekt/cmd"
-	"github.com/sourcegraph/zoekt/index"
+	"github.com/hyangah/zoektlite/cmd"
+	"github.com/hyangah/zoektlite/index"
 )
 
 type fileInfo struct {

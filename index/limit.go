@@ -3,7 +3,7 @@ package index
 import (
 	"log"
 
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 // SortAndTruncateFiles is a convenience around SortFiles and

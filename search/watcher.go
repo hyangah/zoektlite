@@ -27,7 +27,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 
-	"github.com/sourcegraph/zoekt/index"
+	"github.com/hyangah/zoektlite/index"
 )
 
 type shardLoader interface {

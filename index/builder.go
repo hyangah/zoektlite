@@ -41,7 +41,7 @@ import (
 
 	"maps"
 
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 var DefaultDir = filepath.Join(os.Getenv("HOME"), ".zoekt")
@@ -127,7 +127,7 @@ func (o *Options) GetHash() string {
 	hasher.Write(fmt.Appendf(nil, "%t", false)) // h.cTagsMustSucceed = false
 	hasher.Write(fmt.Appendf(nil, "%d", h.sizeMax))
 	hasher.Write(fmt.Appendf(nil, "%q", h.largeFiles))
-	hasher.Write(fmt.Appendf(nil, "%t", true)) // h.disableCTags = true
+	hasher.Write(fmt.Appendf(nil, "%t", o.SymbolLister == nil)) // h.disableCTags = true
 
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
@@ -920,7 +920,7 @@ func (b *Builder) CheckMemoryUsage() {
 
 func (b *Builder) newShardBuilder() (*ShardBuilder, error) {
 	desc := b.opts.RepositoryDescription
-	desc.HasSymbols = false // TODO(hakim): make it default and remove
+	desc.HasSymbols = b.opts.SymbolLister != nil
 	desc.SubRepoMap = b.opts.SubRepositories
 	desc.IndexOptions = b.opts.GetHash()
 

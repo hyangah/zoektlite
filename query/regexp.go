@@ -20,7 +20,7 @@ import (
 
 	"slices"
 
-	"github.com/sourcegraph/zoekt/internal/syntaxutil"
+	"github.com/hyangah/zoektlite/internal/syntaxutil"
 )
 
 var _ = log.Println

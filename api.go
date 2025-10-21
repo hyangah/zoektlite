@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package zoekt
+package zoektlite
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sourcegraph/zoekt/query"
+	"github.com/hyangah/zoektlite/query"
 )
 
 const (

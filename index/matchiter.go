@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 // candidateMatch is a candidate match for a substring.

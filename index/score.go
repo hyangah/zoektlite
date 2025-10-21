@@ -22,8 +22,8 @@ import (
 
 	"github.com/go-enry/go-enry/v2"
 
-	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/internal/ctags"
+	zoekt "github.com/hyangah/zoektlite"
+	"github.com/hyangah/zoektlite/internal/ctags"
 )
 
 const (

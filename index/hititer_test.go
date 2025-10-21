@@ -24,8 +24,7 @@ import (
 	"slices"
 
 	"github.com/google/go-cmp/cmp"
-
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 func TestCompressedPostingIterator_limit(t *testing.T) {

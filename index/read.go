@@ -27,7 +27,7 @@ import (
 	"github.com/RoaringBitmap/roaring"
 	"github.com/rs/xid"
 
-	"github.com/sourcegraph/zoekt"
+	zoekt "github.com/hyangah/zoektlite"
 )
 
 // IndexFile is a file suitable for concurrent read access. For performance

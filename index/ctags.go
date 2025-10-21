@@ -14,7 +14,7 @@
 
 package index
 
-import "github.com/sourcegraph/zoekt"
+import zoekt "github.com/hyangah/zoektlite"
 
 func parseSymbols(todo []*Document, symbolLister SymbolLister) error {
 	for _, doc := range todo {
@@ -27,7 +27,7 @@ func parseSymbols(todo []*Document, symbolLister SymbolLister) error {
 		if symbolLister == nil {
 			continue
 		}
-		symOffsets, symMetaData, err := symbolLister.Resolve(doc.Content, doc.Language)
+		symOffsets, symMetaData, err := symbolLister.List(doc.Content, doc.Language)
 		if err != nil {
 			doc.Symbols = symOffsets
 			doc.SymbolsMetaData = symMetaData
@@ -38,5 +38,5 @@ func parseSymbols(todo []*Document, symbolLister SymbolLister) error {
 
 // SymbolLister parses the file content and returns the symbol information.
 type SymbolLister interface {
-	Resolve(content []byte, lang string) ([]DocumentSection, []*zoekt.Symbol, error)
+	List(content []byte, lang string) ([]DocumentSection, []*zoekt.Symbol, error)
 }

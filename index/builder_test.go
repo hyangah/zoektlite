@@ -16,9 +16,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	zoekt "github.com/hyangah/zoektlite"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcegraph/zoekt"
 )
 
 var update = flag.Bool("update", false, "update golden file")
