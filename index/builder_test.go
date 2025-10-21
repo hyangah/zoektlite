@@ -16,7 +16,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/zoekt"
@@ -35,7 +34,6 @@ func TestBuildv16(t *testing.T) {
 			Source:   "./testdata/repo/",
 			Metadata: map[string]string{"foo": "bar"},
 		},
-		DisableCTags: true,
 	}
 	opts.SetDefaults()
 
@@ -138,16 +136,12 @@ func TestFlags(t *testing.T) {
 
 	ignored := []cmp.Option{
 		// depends on $PATH setting.
-		cmpopts.IgnoreFields(Options{}, "CTagsPath"),
-		cmpopts.IgnoreFields(Options{}, "ScipCTagsPath"),
 		cmpopts.IgnoreFields(Options{}, "changedOrRemovedFiles"),
 		cmpopts.IgnoreFields(zoekt.Repository{}, "priority"),
 	}
 
 	for _, c := range cases {
 		c.want.SetDefaults()
-		// depends on $PATH setting.
-		c.want.CTagsPath = ""
 
 		got := Options{}
 		fs := flag.NewFlagSet("", flag.ContinueOnError)
@@ -172,8 +166,7 @@ func TestIncrementalSkipIndexing(t *testing.T) {
 			RepositoryDescription: zoekt.Repository{
 				Name: "repo17",
 			},
-			SizeMax:      2097152,
-			DisableCTags: true,
+			SizeMax: 2097152,
 		},
 	}, {
 		name: "v16-noop",
@@ -182,8 +175,7 @@ func TestIncrementalSkipIndexing(t *testing.T) {
 			RepositoryDescription: zoekt.Repository{
 				Name: "repo",
 			},
-			SizeMax:      2097152,
-			DisableCTags: true,
+			SizeMax: 2097152,
 		},
 	}, {
 		name: "v17-id",
@@ -195,8 +187,7 @@ func TestIncrementalSkipIndexing(t *testing.T) {
 					"repoid": "123",
 				},
 			},
-			SizeMax:      2097152,
-			DisableCTags: true,
+			SizeMax: 2097152,
 		},
 	}, {
 		name: "doesnotexist",
@@ -205,8 +196,7 @@ func TestIncrementalSkipIndexing(t *testing.T) {
 			RepositoryDescription: zoekt.Repository{
 				Name: "doesnotexist",
 			},
-			SizeMax:      2097152,
-			DisableCTags: true,
+			SizeMax: 2097152,
 		},
 	}}
 
@@ -295,8 +285,6 @@ func TestPartialSuccess(t *testing.T) {
 // Tests that we skip looping over repos in compound shards when we know that
 // the repository we are looking for is not in the shard.
 func TestSkipCompoundShards(t *testing.T) {
-	metricCompoundShardLookups.Reset()
-
 	compoundShards := [][]zoekt.Repository{
 		{
 			{Name: "repoA", ID: 1},
@@ -312,7 +300,6 @@ func TestSkipCompoundShards(t *testing.T) {
 		},
 	}
 	var lookForRepoID uint32 = 99
-	wantSkippedCount := 2
 
 	indexDir := t.TempDir()
 	for _, repositoryGroup := range compoundShards {
@@ -325,10 +312,7 @@ func TestSkipCompoundShards(t *testing.T) {
 
 	shard := o.findCompoundShard()
 	require.Empty(t, shard)
-
-	// Check if the "skipped" counter was incremented
-	skippedCount := int(testutil.ToFloat64(metricCompoundShardLookups.WithLabelValues("skipped")))
-	require.Equal(t, wantSkippedCount, skippedCount)
+	// TODO(hakim): collect stat and check 2 are skipped.
 }
 
 // With optimization
@@ -598,14 +582,6 @@ func TestBuilder_DeltaShardsBuildsShouldErrorOnIndexOptionsMismatch(t *testing.T
 		options func(options *Options)
 	}{
 		{
-			name:    "update option CTagsPath to non default",
-			options: func(options *Options) { options.CTagsPath = "ctags_updated_test/universal-ctags" },
-		},
-		{
-			name:    "update option DisableCTags to non default",
-			options: func(options *Options) { options.DisableCTags = true },
-		},
-		{
 			name:    "update option SizeMax to non default",
 			options: func(options *Options) { options.SizeMax -= 10 },
 		},
@@ -720,12 +696,10 @@ func TestBuilder_DeltaShardsMetadataInOlderShards(t *testing.T) {
 			indexDir := t.TempDir()
 
 			createTestShard(t, indexDir, test.originalRepository, 2, func(o *Options) {
-				o.DisableCTags = true
 			})
 
 			shards := createTestShard(t, indexDir, test.updatedRepository, 1, func(o *Options) {
 				o.IsDelta = true
-				o.DisableCTags = true
 			})
 
 			if len(shards) < 3 {
@@ -752,7 +726,7 @@ func TestBuilder_DeltaShardsMetadataInOlderShards(t *testing.T) {
 
 				diffOptions := []cmp.Option{
 					cmpopts.IgnoreUnexported(zoekt.Repository{}),
-					cmpopts.IgnoreFields(zoekt.Repository{}, "IndexOptions"),
+					cmpopts.IgnoreFields(zoekt.Repository{}, "IndexOptions", "HasSymbols"),
 					cmpopts.EquateEmpty(),
 				}
 
@@ -827,20 +801,12 @@ func TestFindRepositoryMetadata(t *testing.T) {
 			// setup
 			indexDir := t.TempDir()
 
-			optFns := []func(o *Options){
-				// ctags aren't important for this test, and the equality checks
-				// for diffing repositories can break due to local configuration
-				func(o *Options) {
-					o.DisableCTags = true
-				},
-			}
-
 			for _, r := range tt.normalShardRepositories {
-				createTestShard(t, indexDir, r, 1, optFns...)
+				createTestShard(t, indexDir, r, 1)
 			}
 
 			if len(tt.compoundShardRepositories) > 0 {
-				createTestCompoundShard(t, indexDir, tt.compoundShardRepositories, optFns...)
+				createTestCompoundShard(t, indexDir, tt.compoundShardRepositories)
 			}
 
 			o := &Options{
@@ -1180,22 +1146,5 @@ func TestOptions_shardName(t *testing.T) {
 	t.Setenv("WORKSPACES_API_URL", "")
 	if got, want := opts.shardNameVersion(16, 0), "/data/a%2Fb_v16.00000.zoekt"; got != want {
 		t.Fatalf("expected shard name to be repo name based:\ngot:  %q\nwant: %q", got, want)
-	}
-
-	t.Setenv("WORKSPACES_API_URL", "http://example.com")
-	if got, want := opts.shardNameVersion(16, 0), "/data/000000123_000000456_v16.00000.zoekt"; got != want {
-		t.Fatalf("expected shard name to be ID based:\ngot:  %q\nwant: %q", got, want)
-	}
-
-	// If something goes wrong and TenantID and RepoID is unset, we create a
-	// name which won't be visible by any tenant.
-	opts = Options{
-		IndexDir: "/data",
-		RepositoryDescription: zoekt.Repository{
-			Name: "a/b",
-		},
-	}
-	if got, want := opts.shardNameVersion(16, 0), "/data/000000000_000000000_v16.00000.zoekt"; got != want {
-		t.Fatalf("expected shard name to be with no tenant:\ngot:  %q\nwant: %q", got, want)
 	}
 }

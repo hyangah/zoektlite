@@ -36,7 +36,6 @@ import (
 	"github.com/sourcegraph/zoekt"
 	"github.com/sourcegraph/zoekt/index"
 	"github.com/sourcegraph/zoekt/internal/tenant/systemtenant"
-	"github.com/sourcegraph/zoekt/internal/trace"
 	"github.com/sourcegraph/zoekt/query"
 )
 
@@ -513,20 +512,6 @@ func doSelectRepoSet(shards []*rankedShard, and *query.And) ([]*rankedShard, que
 }
 
 func (ss *shardedSearcher) Search(ctx context.Context, q query.Q, opts *zoekt.SearchOptions) (sr *zoekt.SearchResult, err error) {
-	tr, ctx := trace.New(ctx, "shardedSearcher.Search", "")
-	tr.LazyLog(q, true)
-	tr.LazyPrintf("opts: %+v", opts)
-	defer func() {
-		if sr != nil {
-			tr.LazyPrintf("num files: %d", len(sr.Files))
-			tr.LazyPrintf("stats: %+v", sr.Stats)
-		}
-		if err != nil {
-			tr.LazyPrintf("error: %v", err)
-			tr.SetError(err)
-		}
-		tr.Finish()
-	}()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -538,7 +523,6 @@ func (ss *shardedSearcher) Search(ctx context.Context, q query.Q, opts *zoekt.Se
 		return nil, err
 	}
 	defer proc.Release()
-	tr.LazyPrintf("acquired process")
 
 	wait := time.Since(start)
 	start = time.Now()
@@ -572,22 +556,12 @@ func (ss *shardedSearcher) Search(ctx context.Context, q query.Q, opts *zoekt.Se
 }
 
 func (ss *shardedSearcher) StreamSearch(ctx context.Context, q query.Q, opts *zoekt.SearchOptions, sender zoekt.Sender) (err error) {
-	tr, ctx := trace.New(ctx, "shardedSearcher.StreamSearch", "")
-	defer func() {
-		if err != nil {
-			tr.LazyPrintf("error: %v", err)
-			tr.SetError(err)
-		}
-		tr.Finish()
-	}()
-
 	start := time.Now()
 	proc, err := ss.sched.Acquire(ctx)
 	if err != nil {
 		return err
 	}
 	defer proc.Release()
-	tr.LazyPrintf("acquired process")
 
 	loaded := ss.getLoaded()
 	shards := loaded.shards
@@ -651,7 +625,6 @@ func (ss *shardedSearcher) StreamSearch(ctx context.Context, q query.Q, opts *zo
 // to collect those shards. The caller must call copyFiles on any
 // SearchResults it returns/streams out before calling done.
 func streamSearch(ctx context.Context, proc *process, q query.Q, opts *zoekt.SearchOptions, shards []*rankedShard, sender zoekt.Sender) (done func(), err error) {
-	tr, ctx := trace.New(ctx, "shardedSearcher.streamSearch", "")
 	overallStart := time.Now()
 	metricSearchRunning.Inc()
 	defer func() {
@@ -659,19 +632,12 @@ func streamSearch(ctx context.Context, proc *process, q query.Q, opts *zoekt.Sea
 		metricSearchDuration.Observe(time.Since(overallStart).Seconds())
 		if err != nil {
 			metricSearchFailedTotal.Inc()
-
-			tr.LazyPrintf("error: %v", err)
-			tr.SetError(err)
 		}
-		tr.Finish()
 	}()
 
 	// Select the subset of shards that we will search over for the given query.
 	{
-		beforeLen := len(shards)
-		beforeQ := q
 		shards, q = selectRepoSet(shards, q)
-		tr.LazyPrintf("selectRepoSet shards=%d->%d q=%s->%s", beforeLen, len(shards), beforeQ, q)
 	}
 
 	if len(shards) == 0 {
@@ -950,18 +916,9 @@ func listOneShard(ctx context.Context, s zoekt.Searcher, q query.Q, opts *zoekt.
 }
 
 func (ss *shardedSearcher) List(ctx context.Context, q query.Q, opts *zoekt.ListOptions) (rl *zoekt.RepoList, err error) {
-	tr, ctx := trace.New(ctx, "shardedSearcher.List", "")
 	metricListRunning.Inc()
 	defer func() {
 		metricListRunning.Dec()
-		if rl != nil {
-			tr.LazyPrintf("repos.size=%d reposmap.size=%d crashes=%d stats=%+v", len(rl.Repos), len(rl.ReposMap), rl.Crashes, rl.Stats)
-		}
-		if err != nil {
-			tr.LazyPrintf("error: %v", err)
-			tr.SetError(err)
-		}
-		tr.Finish()
 	}()
 
 	q = query.Simplify(q)
@@ -975,7 +932,6 @@ func (ss *shardedSearcher) List(ctx context.Context, q query.Q, opts *zoekt.List
 		return nil, err
 	}
 	defer proc.Release()
-	tr.LazyPrintf("acquired process")
 
 	loaded := ss.getLoaded()
 	shards := loaded.shards
@@ -997,10 +953,7 @@ func (ss *shardedSearcher) List(ctx context.Context, q query.Q, opts *zoekt.List
 	// query. A common List query only asks for a specific repo, so this is an
 	// important optimization.
 	{
-		beforeLen := len(shards)
-		beforeQ := q
 		shards, q = selectRepoSet(shards, q)
-		tr.LazyPrintf("selectRepoSet shards=%d->%d q=%s->%s", beforeLen, len(shards), beforeQ, q)
 	}
 
 	if len(shards) == 0 {

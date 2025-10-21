@@ -23,7 +23,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -36,7 +35,6 @@ import (
 	"time"
 
 	"github.com/bmatcuk/doublestar"
-	"github.com/dustin/go-humanize"
 	"github.com/go-enry/go-enry/v2"
 	"github.com/rs/xid"
 	"golang.org/x/sys/unix"
@@ -44,8 +42,6 @@ import (
 	"maps"
 
 	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/internal/ctags"
-	"github.com/sourcegraph/zoekt/internal/tenant"
 )
 
 var DefaultDir = filepath.Join(os.Getenv("HOME"), ".zoekt")
@@ -79,19 +75,6 @@ type Options struct {
 	// SubRepositories is a path => sub repository map.
 	SubRepositories map[string]*zoekt.Repository
 
-	// DisableCTags disables the generation of ctags metadata.
-	DisableCTags bool
-
-	// CtagsPath is the path to the ctags binary to run, or empty
-	// if a valid binary couldn't be found.
-	CTagsPath string
-
-	// Same as CTagsPath but for scip-ctags
-	ScipCTagsPath string
-
-	// If set, ctags must succeed.
-	CTagsMustSucceed bool
-
 	// LargeFiles is a slice of glob patterns, including ** for any number
 	// of directories, where matching file paths should be indexed
 	// regardless of their size. The full pattern syntax is here:
@@ -102,12 +85,13 @@ type Options struct {
 	// last run.
 	IsDelta bool
 
+	// SymbolLister is an optional resolver for symbol information.
+	SymbolLister SymbolLister
+
 	// changedOrRemovedFiles is a list of file paths that have been changed or removed
 	// since the last indexing job for this repository. These files will be tombstoned
 	// in the older shards for this repository.
 	changedOrRemovedFiles []string
-
-	LanguageMap ctags.LanguageMap
 
 	// ShardMerging is true if builder should respect compound shards. This is a
 	// Sourcegraph specific option.
@@ -124,20 +108,14 @@ type Options struct {
 
 // HashOptions contains only the options in Options that upon modification leads to IndexState of IndexStateMismatch during the next index building.
 type HashOptions struct {
-	sizeMax          int
-	disableCTags     bool
-	ctagsPath        string
-	cTagsMustSucceed bool
-	largeFiles       []string
+	sizeMax    int
+	largeFiles []string
 }
 
 func (o *Options) HashOptions() HashOptions {
 	return HashOptions{
-		sizeMax:          o.SizeMax,
-		disableCTags:     o.DisableCTags,
-		ctagsPath:        o.CTagsPath,
-		cTagsMustSucceed: o.CTagsMustSucceed,
-		largeFiles:       o.LargeFiles,
+		sizeMax:    o.SizeMax,
+		largeFiles: o.LargeFiles,
 	}
 }
 
@@ -145,11 +123,11 @@ func (o *Options) GetHash() string {
 	h := o.HashOptions()
 	hasher := sha1.New()
 
-	hasher.Write([]byte(h.ctagsPath))
-	hasher.Write(fmt.Appendf(nil, "%t", h.cTagsMustSucceed))
+	hasher.Write([]byte(""))                    // h.ctagsPath = ""
+	hasher.Write(fmt.Appendf(nil, "%t", false)) // h.cTagsMustSucceed = false
 	hasher.Write(fmt.Appendf(nil, "%d", h.sizeMax))
 	hasher.Write(fmt.Appendf(nil, "%q", h.largeFiles))
-	hasher.Write(fmt.Appendf(nil, "%t", h.disableCTags))
+	hasher.Write(fmt.Appendf(nil, "%t", true)) // h.disableCTags = true
 
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
@@ -182,11 +160,11 @@ func (o *Options) Flags(fs *flag.FlagSet) {
 	fs.IntVar(&o.ShardMax, "shard_limit", x.ShardMax, "maximum corpus size for a shard")
 	fs.IntVar(&o.Parallelism, "parallelism", x.Parallelism, "maximum number of parallel indexing processes.")
 	fs.StringVar(&o.IndexDir, "index", x.IndexDir, "directory for search indices")
-	fs.BoolVar(&o.CTagsMustSucceed, "require_ctags", x.CTagsMustSucceed, "If set, ctags calls must succeed.")
+	//fs.BoolVar(&o.CTagsMustSucceed, "require_ctags", x.CTagsMustSucceed, "If set, ctags calls must succeed.")
 	fs.Var(largeFilesFlag{o}, "large_file", "A glob pattern where matching files are to be index regardless of their size. You can add multiple patterns by setting this more than once.")
 
-	// Sourcegraph specific
-	fs.BoolVar(&o.DisableCTags, "disable_ctags", x.DisableCTags, "If set, ctags will not be called.")
+	// Sourcegraph specific - TODO(hakim) - delete all
+	//fs.BoolVar(&o.DisableCTags, "disable_ctags", x.DisableCTags, "If set, ctags will not be called.")
 	fs.BoolVar(&o.ShardMerging, "shard_merging", x.ShardMerging, "If set, builder will respect compound shards.")
 }
 
@@ -214,19 +192,11 @@ func (o *Options) Args() []string {
 		args = append(args, "-index", o.IndexDir)
 	}
 
-	if o.CTagsMustSucceed {
-		args = append(args, "-require_ctags")
-	}
-
 	for _, a := range o.LargeFiles {
 		args = append(args, "-large_file", a)
 	}
 
-	// Sourcegraph specific
-	if o.DisableCTags {
-		args = append(args, "-disable_ctags")
-	}
-
+	// Sourcegraph specific - TODO(hakim): delete
 	if o.ShardMerging {
 		args = append(args, "-shard_merging")
 	}
@@ -246,8 +216,7 @@ type Builder struct {
 	docChecker   DocChecker
 	size         int
 
-	parserBins ctags.ParserBinMap
-	building   sync.WaitGroup
+	building sync.WaitGroup
 
 	errMu      sync.Mutex
 	buildError error
@@ -273,40 +242,8 @@ type finishedShard struct {
 	temp, final string
 }
 
-func checkCTags() string {
-	if ctags := os.Getenv("CTAGS_COMMAND"); ctags != "" {
-		return ctags
-	}
-
-	if ctags, err := exec.LookPath("universal-ctags"); err == nil {
-		return ctags
-	}
-
-	return ""
-}
-
-func checkScipCTags() string {
-	if ctags := os.Getenv("SCIP_CTAGS_COMMAND"); ctags != "" {
-		return ctags
-	}
-
-	if ctags, err := exec.LookPath("scip-ctags"); err == nil {
-		return ctags
-	}
-
-	return ""
-}
-
 // SetDefaults sets reasonable default options.
 func (o *Options) SetDefaults() {
-	if o.CTagsPath == "" && !o.DisableCTags {
-		o.CTagsPath = checkCTags()
-	}
-
-	if o.ScipCTagsPath == "" && !o.DisableCTags {
-		o.ScipCTagsPath = checkScipCTags()
-	}
-
 	if o.Parallelism == 0 {
 		o.Parallelism = 4
 	}
@@ -334,17 +271,8 @@ func (o *Options) shardName(n int) string {
 }
 
 func (o *Options) shardNameVersion(version, n int) string {
-	var prefix string
-
-	// Sourcegraph specific: We use IDs in shard names on multi-tenant
-	// instances to prevent conflicts.
-	if tenant.UseIDBasedShardNames() {
-		prefix = fmt.Sprintf("%09d_%09d", o.RepositoryDescription.TenantID, o.RepositoryDescription.ID)
-	} else {
-		prefix = o.RepositoryDescription.Name
-	}
-
-	return shardName(o.IndexDir, prefix, version, n)
+	prefix := o.RepositoryDescription.Name
+	return ShardName(o.IndexDir, prefix, version, n)
 }
 
 type IndexState string
@@ -411,8 +339,9 @@ func (o *Options) IndexState() (IndexState, string) {
 		return IndexStateCorrupt, fn
 	}
 
+	// TODO(hakim)
 	if repo.IndexOptions != o.GetHash() {
-		return IndexStateOption, fn
+		//	return IndexStateOption, fn
 	}
 
 	if !reflect.DeepEqual(repo.Branches, o.RepositoryDescription.Branches) {
@@ -554,18 +483,6 @@ func NewBuilder(opts Options) (*Builder, error) {
 		throttle:       make(chan int, opts.Parallelism),
 		finishedShards: map[string]string{},
 	}
-
-	parserBins, err := ctags.NewParserBinMap(
-		b.opts.CTagsPath,
-		b.opts.ScipCTagsPath,
-		opts.LanguageMap,
-		b.opts.CTagsMustSucceed,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	b.parserBins = parserBins
 
 	if opts.IsDelta {
 		// Delta shards build on top of previously existing shards.
@@ -945,16 +862,9 @@ func sortDocuments(todo []*Document) {
 }
 
 func (b *Builder) buildShard(todo []*Document, nextShardNum int) (*finishedShard, error) {
-	if !b.opts.DisableCTags && (b.opts.CTagsPath != "" || b.opts.ScipCTagsPath != "") {
-		err := parseSymbols(todo, b.opts.LanguageMap, b.parserBins)
-		if b.opts.CTagsMustSucceed && err != nil {
-			return nil, err
-		}
-		if err != nil {
-			log.Printf("ignoring universal:%s or scip:%s error: %v", b.opts.CTagsPath, b.opts.ScipCTagsPath, err)
-		}
+	if err := parseSymbols(todo, b.opts.SymbolLister); err != nil {
+		return nil, err
 	}
-
 	name := b.opts.shardName(nextShardNum)
 
 	shardBuilder, err := b.newShardBuilder()
@@ -991,7 +901,7 @@ func (b *Builder) CheckMemoryUsage() {
 	if m.HeapAlloc > b.opts.HeapProfileTriggerBytes && b.heapProfileMu.TryLock() {
 		defer b.heapProfileMu.Unlock()
 
-		log.Printf("writing memory profile, allocated heap: %s", humanize.Bytes(m.HeapAlloc))
+		// log.Printf("writing memory profile, allocated heap: %s", humanize.Bytes(m.HeapAlloc))
 		name := filepath.Join(b.opts.IndexDir, fmt.Sprintf("indexmemory.prof.%d", b.heapProfileNum))
 		f, err := os.Create(name)
 		if err != nil {
@@ -1010,7 +920,7 @@ func (b *Builder) CheckMemoryUsage() {
 
 func (b *Builder) newShardBuilder() (*ShardBuilder, error) {
 	desc := b.opts.RepositoryDescription
-	desc.HasSymbols = !b.opts.DisableCTags && b.opts.CTagsPath != ""
+	desc.HasSymbols = false // TODO(hakim): make it default and remove
 	desc.SubRepoMap = b.opts.SubRepositories
 	desc.IndexOptions = b.opts.GetHash()
 

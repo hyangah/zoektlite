@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/regexp"
 
 	"github.com/sourcegraph/zoekt"
-	"github.com/sourcegraph/zoekt/internal/tenant"
 	"github.com/sourcegraph/zoekt/query"
 )
 
@@ -221,12 +220,6 @@ nextFileMatch:
 
 			// Skip tombstoned repositories
 			if repoMetadata.Tombstone {
-				continue
-			}
-
-			// 🚨 SECURITY: Skip documents that don't belong to the tenant. This check is
-			// necessary to prevent leaking data across tenants.
-			if !tenant.HasAccess(ctx, repoMetadata.TenantID) {
 				continue
 			}
 
@@ -525,7 +518,7 @@ func (d *indexData) gatherBranches(docID uint32, mt matchTree, known map[matchTr
 func (d *indexData) List(ctx context.Context, q query.Q, opts *zoekt.ListOptions) (rl *zoekt.RepoList, err error) {
 	var include func(rle *zoekt.RepoListEntry) bool
 
-	q = d.simplify(q)
+	q = query.Simplify(q)
 	if c, ok := q.(*query.Const); ok {
 		if !c.Value {
 			return &zoekt.RepoList{}, nil
@@ -567,11 +560,6 @@ func (d *indexData) List(ctx context.Context, q query.Q, opts *zoekt.ListOptions
 
 	for i := range d.repoListEntry {
 		if d.repoMetaData[i].Tombstone {
-			continue
-		}
-		// 🚨 SECURITY: Skip documents that don't belong to the tenant. This check is
-		// necessary to prevent leaking data across tenants.
-		if !tenant.HasAccess(ctx, d.repoMetaData[i].TenantID) {
 			continue
 		}
 		rle := &d.repoListEntry[i]

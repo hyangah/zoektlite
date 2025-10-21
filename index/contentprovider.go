@@ -33,7 +33,7 @@ var _ = log.Println
 // content with the same code.
 type contentProvider struct {
 	id    *indexData
-	stats *zoekt.Stats
+	stats *zoekt.Stats // TODO(hakim): can be useful.
 
 	// mutable
 	err      error

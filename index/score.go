@@ -161,7 +161,7 @@ func (p *contentProvider) scoreLine(ms []*candidateMatch, language string, lineN
 				symbolKind := ctags.ParseSymbolKind(si.Kind)
 				sym := sectionSlice(data, sec)
 
-				addScore(fmt.Sprintf("kind:%s:%s", language, si.Kind), scoreSymbolKind(language, filename, sym, symbolKind))
+				addScore(fmt.Sprintf("kind:%s:%s", language, si.Kind), scoreSymbolKind(language, filename, sym, ctags.SymbolKind(symbolKind)))
 
 				// This is from a symbol tree, so we need to store the symbol
 				// information.

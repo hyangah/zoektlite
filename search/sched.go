@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -315,104 +313,25 @@ func parseTuneables(v string) map[string]int {
 	return m
 }
 
-// We use a gauge and counter to track the number of processes in each
-// state. They can be one of the following states:
-//
-//  1. global queued
-//  2. interactive queued
-//  3. interactive running
-//  4. batch queued
-//  5. batch running
-//
-// From each state you either transition to the next state or the process
-// ends.
-//
-// Additionally once a process transitions from "global queued" it will be
-// "global running" until termination. This is an additional state on top of
-// the ones listed above.
-//
-// Global refers to the global scheduler lock. A process can only be blocked
-// in global queued if an exclusive lock has been acquired.
-//
-// We have counters for each possible reason a process finished:
-//
-//   - interactive timedout
-//   - batch timedout
-//   - released
-//
-// We have separate gauges and counters for exclusive processes which index
-// what we track for normal processes:
-//
-//   - exclusive queued
-//   - exclusive running
-var (
-	metricSched = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "zoekt_shards_sched",
-		Help: "The current number of zoekt scheduler processes in a state.",
-	}, []string{"type", "state"})
-	metricSchedTotal = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "zoekt_shards_sched_total",
-		Help: "The total number of zoekt scheduler processes in a state.",
-	}, []string{"type", "state"})
-)
-
 // sema is a semaphore which tracks its state in prometheus.
 type sema struct {
 	sem *semaphore.Weighted
-
-	metricQueued        *gaugeCounter
-	metricRunning       *gaugeCounter
-	metricTimedoutTotal prometheus.Counter
 }
 
 func newSema(capacity int64, typ string) *sema {
 	return &sema{
 		sem: semaphore.NewWeighted(capacity),
-
-		metricQueued: &gaugeCounter{
-			gauge:   metricSched.WithLabelValues(typ, "queued"),
-			counter: metricSchedTotal.WithLabelValues(typ, "queued"),
-		},
-		metricRunning: &gaugeCounter{
-			gauge:   metricSched.WithLabelValues(typ, "running"),
-			counter: metricSchedTotal.WithLabelValues(typ, "running"),
-		},
-		metricTimedoutTotal: metricSchedTotal.WithLabelValues(typ, "timedout"),
 	}
 }
 
 func (s *sema) Acquire(ctx context.Context) error {
-	s.metricQueued.Inc()
-	defer s.metricQueued.Dec()
-
 	err := s.sem.Acquire(ctx, 1)
 	if err != nil {
-		s.metricTimedoutTotal.Inc()
 		return err
 	}
-
-	s.metricRunning.Inc()
-
 	return nil
 }
 
 func (s *sema) Release() {
 	s.sem.Release(1)
-	s.metricRunning.Dec()
-}
-
-// gaugeCounter is a wrapper around a gauge and a counter. Whenever the gauge
-// is incremented so is the counter. Decrement only affects the gauge.
-type gaugeCounter struct {
-	gauge   prometheus.Gauge
-	counter prometheus.Counter
-}
-
-func (m *gaugeCounter) Inc() {
-	m.gauge.Inc()
-	m.counter.Inc()
-}
-
-func (m *gaugeCounter) Dec() {
-	m.gauge.Dec()
 }

@@ -6,18 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-
 	"github.com/sourcegraph/zoekt"
 	"github.com/sourcegraph/zoekt/index"
 )
-
-var metricFinalAggregateSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
-	Name:    "zoekt_final_aggregate_size",
-	Help:    "The number of file matches we aggregated before flushing",
-	Buckets: prometheus.ExponentialBuckets(1, 2, 20),
-}, []string{"reason"})
 
 // collectSender is a sender that will aggregate results. Once sending is
 // done, you call Done to return the aggregated result which are ranked.
@@ -108,7 +99,6 @@ func newFlushCollectSender(opts *zoekt.SearchOptions, sender zoekt.Sender) (zoek
 		}
 
 		if agg, ok := collectSender.Done(); ok {
-			metricFinalAggregateSize.WithLabelValues(reason.String()).Observe(float64(len(agg.Files)))
 			agg.FlushReason = reason
 			sender.Send(agg)
 		}

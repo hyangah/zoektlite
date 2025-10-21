@@ -15,8 +15,8 @@ import (
 // identical.
 func TestExplode(t *testing.T) {
 	simpleShards := []string{
-		".././testdata/shards/repo_v16.00000.zoekt",
-		".././testdata/shards/repo2_v16.00000.zoekt",
+		"../testdata/shards/repo_v16.00000.zoekt",
+		"../testdata/shards/repo2_v16.00000.zoekt",
 	}
 
 	// repo name -> IndexMetadata

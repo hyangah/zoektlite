@@ -2532,7 +2532,7 @@ func TestEstimateDocCount(t *testing.T) {
 			), zoekt.SearchOptions{
 				EstimateDocCount: true,
 			}); sres.Stats.ShardFilesConsidered != 0 {
-			t.Errorf("got FilesConsidered = %d, want 0", sres.Stats.FilesConsidered)
+			t.Errorf("got FilesConsidered = %d, want 0", sres.Stats.ShardFilesConsidered)
 		}
 	})
 

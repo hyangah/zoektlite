@@ -16,6 +16,8 @@ import (
 // Merge files into a compound shard in dstDir. Merge returns tmpName and a
 // dstName. It is the responsibility of the caller to delete the input shards and
 // rename the temporary compound shard from tmpName to dstName.
+//
+// TODO(hakim): consider to delete.
 func Merge(dstDir string, files ...IndexFile) (tmpName, dstName string, _ error) {
 	var ds []*indexData
 	for _, f := range files {
@@ -214,12 +216,9 @@ func explode(dstDir string, f IndexFile, ibFuncs ...shardBuilderFunc) (map[strin
 			ibFunc(ib)
 		}
 
-		opts := Options{
-			IndexDir:              dstDir,
-			RepositoryDescription: ib.repoList[0],
-		}
+		prefix := ib.repoList[0].Name
 
-		shardName := opts.shardNameVersion(ib.indexFormatVersion, 0)
+		shardName := ShardName(dstDir, prefix, ib.indexFormatVersion, 0)
 		shardNameTmp := shardName + ".tmp"
 		shardNames[shardNameTmp] = shardName
 		return builderWriteAll(shardNameTmp, ib)

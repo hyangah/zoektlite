@@ -25,8 +25,6 @@ import (
 	"sort"
 
 	"github.com/RoaringBitmap/roaring"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/xid"
 
 	"github.com/sourcegraph/zoekt"
@@ -694,29 +692,11 @@ func maybeContainsRepo(inf IndexFile, repoID uint32) bool {
 	return rb.Contains(repoID)
 }
 
-var metricCompoundShardLookups = promauto.NewCounterVec(prometheus.CounterOpts{
-	Name: "zoekt_compound_shard_lookups",
-	Help: "Number of compound shard lookups and how much work was done.",
-}, []string{"state"})
-
 // containsRepo returns true if the shard at path contains a repo with id. The
 // function returns false if the shard does not contain the repo or if it
 // encounters an error.
 func containsRepo(p string, id uint32) bool {
-	var err error
-	earlyReturn := false
-
-	defer func() {
-		if err != nil {
-			metricCompoundShardLookups.WithLabelValues("error").Inc()
-			return
-		}
-		if earlyReturn {
-			metricCompoundShardLookups.WithLabelValues("skipped").Inc()
-			return
-		}
-		metricCompoundShardLookups.WithLabelValues("full_lookup").Inc()
-	}()
+	// TODO: measure shard lookup counts
 
 	f, err := os.Open(p)
 	if err != nil {
@@ -738,7 +718,6 @@ func containsRepo(p string, id uint32) bool {
 	// some sort of global oracle here to avoid filepath.Glob and checking
 	// each compound shard.
 	if !maybeContainsRepo(inf, id) {
-		earlyReturn = true
 		return false
 	}
 
