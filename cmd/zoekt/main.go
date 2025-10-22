@@ -28,8 +28,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/felixge/fgprof"
-
 	zoekt "github.com/hyangah/zoektlite"
 	"github.com/hyangah/zoektlite/index"
 	"github.com/hyangah/zoektlite/query"
@@ -124,18 +122,6 @@ func startCPUProfile(path string, duration time.Duration) func() bool {
 	})
 }
 
-func startFullProfile(path string, duration time.Duration) func() bool {
-	return profile(path, duration, func(w io.Writer) func() {
-		stop := fgprof.Start(w, fgprof.FormatPprof)
-
-		return func() {
-			if err := stop(); err != nil {
-				log.Fatal(err)
-			}
-		}
-	})
-}
-
 // experimental support for symbol queries. We just convert substring queries
 // into symbol queries. Needs to run after query.ExpandFileContent
 func toSymbolQuery(q query.Q) query.Q {
@@ -159,7 +145,6 @@ func main() {
 	index := flag.String("index_dir",
 		filepath.Join(os.Getenv("HOME"), ".zoekt"), "search for index files in `directory`")
 	cpuProfile := flag.String("cpu_profile", "", "write cpu profile to `file`")
-	fullProfile := flag.String("full_profile", "", "write full profile to `file`")
 	profileTime := flag.Duration("profile_time", time.Second, "run this long to gather stats.")
 	debug := flag.Bool("debug", false, "show debugscore output.")
 	verbose := flag.Bool("v", false, "print some background data")
@@ -223,9 +208,6 @@ func main() {
 	// If profiling, do it another time so we measure with
 	// warm caches.
 	for run := startCPUProfile(*cpuProfile, *profileTime); run(); {
-		sres, _ = searcher.Search(context.Background(), q, &sOpts)
-	}
-	for run := startFullProfile(*fullProfile, *profileTime); run(); {
 		sres, _ = searcher.Search(context.Background(), q, &sOpts)
 	}
 

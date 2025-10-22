@@ -25,8 +25,6 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"go.uber.org/automaxprocs/maxprocs"
-
 	"github.com/hyangah/zoektlite/cmd"
 	"github.com/hyangah/zoektlite/index"
 )
@@ -72,9 +70,6 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-
-	// Tune GOMAXPROCS to match Linux container CPU quota.
-	_, _ = maxprocs.Set()
 
 	opts := cmd.OptionsFromFlags()
 	if *cpuProfile != "" {
