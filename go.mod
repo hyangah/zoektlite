@@ -1,7 +1,7 @@
 module github.com/hyangah/zoektlite
 
 require (
-	github.com/RoaringBitmap/roaring v1.9.4
+	github.com/RoaringBitmap/roaring/v2 v2.12.0
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/fsnotify/fsnotify v1.8.0
@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/grafana/regexp v0.0.0-20240607082908-2cb410fa05da
 	github.com/rs/xid v1.6.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/atomic v1.11.0
 	golang.org/x/sync v0.11.0
 	golang.org/x/sys v0.30.0
@@ -17,7 +17,7 @@ require (
 )
 
 require (
-	github.com/bits-and-blooms/bitset v1.20.0 // indirect
+	github.com/bits-and-blooms/bitset v1.24.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-enry/go-oniguruma v1.2.1 // indirect
 	github.com/kr/pretty v0.3.1 // indirect

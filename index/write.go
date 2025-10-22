@@ -24,7 +24,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/RoaringBitmap/roaring"
+	"github.com/RoaringBitmap/roaring/v2"
 	zoekt "github.com/hyangah/zoektlite"
 )
 

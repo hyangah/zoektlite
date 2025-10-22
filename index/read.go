@@ -24,7 +24,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/RoaringBitmap/roaring"
+	"github.com/RoaringBitmap/roaring/v2"
 	"github.com/rs/xid"
 
 	zoekt "github.com/hyangah/zoektlite"
