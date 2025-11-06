@@ -254,7 +254,6 @@ func (n *innerNode) maybeSplit(opts btreeOpts) (left node, right node, newKey ng
 
 func (n *leaf) visit(f func(n node)) {
 	f(n)
-	return
 }
 
 func (n *innerNode) visit(f func(n node)) {
@@ -272,12 +271,12 @@ func (bt *btree) String() string {
 		case *leaf:
 			return
 		case *innerNode:
-			s += fmt.Sprintf("[")
+			s += "["
 			for _, key := range nd.keys {
 				s += fmt.Sprintf("%d,", key)
 			}
 			s = s[:len(s)-1] // remove trailing comma
-			s += fmt.Sprintf("]")
+			s += "]"
 
 		}
 	})

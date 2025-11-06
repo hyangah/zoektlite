@@ -922,8 +922,9 @@ type Searcher interface {
 type RepoListField int
 
 const (
-	RepoListFieldRepos    RepoListField = 0
-	RepoListFieldReposMap               = 2
+	RepoListFieldRepos RepoListField = 0
+
+	RepoListFieldReposMap = 2
 )
 
 type ListOptions struct {

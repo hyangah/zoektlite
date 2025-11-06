@@ -1,6 +1,16 @@
-// Copyright 2011 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright 2025 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package syntaxutil
 
@@ -15,6 +25,8 @@ import (
 // In this package, re is always a *Regexp and r is always a rune.
 
 // writeRegexp writes the Perl syntax for the regular expression re to b.
+// It is originally from a version of Go's regexp package's writeRegexp
+// but Go's implementation was changed significantly.
 func writeRegexp(b *strings.Builder, re *syntax.Regexp) {
 	switch re.Op {
 	default:
@@ -145,6 +157,7 @@ func writeRegexp(b *strings.Builder, re *syntax.Regexp) {
 	}
 }
 
+// RegexpString returns the Perl syntax of the regular expression re.
 func RegexpString(re *syntax.Regexp) string {
 	var b strings.Builder
 	writeRegexp(&b, re)
