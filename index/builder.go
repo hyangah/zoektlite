@@ -119,9 +119,12 @@ func (o *Options) HashOptions() HashOptions {
 	}
 }
 
+// GetHash returns the hash of the options.
+// Note that this hash is not collision resistant.
 func (o *Options) GetHash() string {
 	h := o.HashOptions()
 	hasher := sha1.New()
+	// TODO(hakim): migrate to sha256 once all producers of the old hash are moved.
 
 	hasher.Write([]byte(""))                    // h.ctagsPath = ""
 	hasher.Write(fmt.Appendf(nil, "%t", false)) // h.cTagsMustSucceed = false
@@ -160,11 +163,9 @@ func (o *Options) Flags(fs *flag.FlagSet) {
 	fs.IntVar(&o.ShardMax, "shard_limit", x.ShardMax, "maximum corpus size for a shard")
 	fs.IntVar(&o.Parallelism, "parallelism", x.Parallelism, "maximum number of parallel indexing processes.")
 	fs.StringVar(&o.IndexDir, "index", x.IndexDir, "directory for search indices")
-	//fs.BoolVar(&o.CTagsMustSucceed, "require_ctags", x.CTagsMustSucceed, "If set, ctags calls must succeed.")
 	fs.Var(largeFilesFlag{o}, "large_file", "A glob pattern where matching files are to be index regardless of their size. You can add multiple patterns by setting this more than once.")
 
 	// Sourcegraph specific - TODO(hakim) - delete all
-	//fs.BoolVar(&o.DisableCTags, "disable_ctags", x.DisableCTags, "If set, ctags will not be called.")
 	fs.BoolVar(&o.ShardMerging, "shard_merging", x.ShardMerging, "If set, builder will respect compound shards.")
 }
 
