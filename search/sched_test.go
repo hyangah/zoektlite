@@ -49,7 +49,7 @@ func BenchmarkYield(b *testing.B) {
 		}
 	})
 
-	// Bencmark of actual yield function
+	// Benchmark of actual yield function
 	b.Run("yield", func(b *testing.B) {
 		ctx := context.Background()
 		sched := newMultiScheduler(1)

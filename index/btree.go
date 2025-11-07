@@ -188,7 +188,7 @@ func (n *innerNode) insert(ng ngram, opts btreeOpts) {
 	insertAt := func(i int) {
 		// Invariant: Nodes always have a free slot.
 		//
-		// We split full nodes on the the way down to the leaf. This has the
+		// We split full nodes on the way down to the leaf. This has the
 		// advantage that inserts are handled in a single pass.
 		if leftNode, rightNode, newKey, ok := n.children[i].maybeSplit(opts); ok {
 			n.keys = append(n.keys[0:i], append([]ngram{newKey}, n.keys[i:]...)...)
@@ -400,7 +400,7 @@ func (b btreeIndex) getBucket(bucketIndex int) (off uint32, sz uint32) {
 	sz = uint32(b.bt.opts.bucketSize / 2 * ngramEncoding)
 	off = b.ngramSec.off + uint32(bucketIndex)*sz
 
-	// Rightmost bucket has size upto the end of the ngramSec.
+	// Rightmost bucket has size up to the end of the ngramSec.
 	if bucketIndex == b.bt.lastBucketIndex {
 		sz = b.ngramSec.off + b.ngramSec.sz - off
 	}

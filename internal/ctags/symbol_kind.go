@@ -47,7 +47,7 @@ const (
 // the full name for "kind" and not the one-letter abbreviation.
 func ParseSymbolKind(kind string) SymbolKind {
 	kind = strings.ToLower(kind)
-	// Generic ranking which will be overriden by language specific ranking
+	// Generic ranking which will be overridden by language specific ranking
 	switch kind {
 	case "accessor", "setter", "getter": // SCIP ctags distinguishes these, but universal-ctags does not
 		return Accessor

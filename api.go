@@ -786,7 +786,7 @@ type IndexMetadata struct {
 
 // Statistics of a (collection of) repositories.
 type RepoStats struct {
-	// Repos is used for aggregrating the number of repositories.
+	// Repos is used for aggregating the number of repositories.
 	//
 	// Note: This field is not populated on RepoListEntry.Stats (individual) but
 	// only for RepoList.Stats (aggregate).
@@ -985,7 +985,7 @@ type SearchOptions struct {
 	// sorting the results.
 	MaxDocDisplayCount int
 
-	// Truncates the number of matchs after collating and sorting the results.
+	// Truncates the number of matches after collating and sorting the results.
 	MaxMatchDisplayCount int
 
 	// If set to a number greater than zero then up to this many number
@@ -1037,7 +1037,7 @@ func (o *SearchOptions) SetDefaults() {
 //
 // Note: some tracing systems have limits on length of values, so we take care
 // to try and make this small, and include the important information near the
-// front incase of truncation.
+// front in case of truncation.
 func (s *SearchOptions) String() string {
 	var b strings.Builder
 

@@ -647,7 +647,7 @@ func sectionSlice(data []byte, sec DocumentSection) []byte {
 func scoreSymbolKind(language string, filename []byte, sym []byte, kind ctags.SymbolKind) float64 {
 	var factor float64
 
-	// Generic ranking which will be overriden by language specific ranking
+	// Generic ranking which will be overridden by language specific ranking
 	switch kind {
 	case ctags.Type: // scip-ctags regression workaround https://github.com/sourcegraph/sourcegraph/issues/57659
 		factor = 8

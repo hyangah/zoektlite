@@ -374,10 +374,10 @@ func (q *Type) String() string {
 	}
 }
 
-// Boost scales the contribution to score of descendents.
+// Boost scales the contribution to score of descendants.
 type Boost struct {
 	Child Q
-	// Boost will multiply the score of its descendents. Values less than 1 will
+	// Boost will multiply the score of its descendants. Values less than 1 will
 	// give less importance while values greater than 1 will give more
 	// importance.
 	Boost float64

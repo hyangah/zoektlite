@@ -243,7 +243,7 @@ func TestDontCountContentOfSkippedFiles(t *testing.T) {
 		t.Fatalf("document content should be empty")
 	}
 	if b.size >= 100 {
-		t.Fatalf("content of skipped documents should not count towards shard size thresold")
+		t.Fatalf("content of skipped documents should not count towards shard size threshold")
 	}
 }
 
@@ -978,7 +978,7 @@ func TestIgnoreSizeMax(t *testing.T) {
 			expected:   true,
 		},
 		{
-			name:       "postive escaped pattern does not disallow",
+			name:       "positive escaped pattern does not disallow",
 			largeFiles: []string{"F0", "\\!F?"},
 			filePaths:  []string{"F0", "!F0"},
 			expected:   true,

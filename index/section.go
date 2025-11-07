@@ -133,7 +133,7 @@ func (s *simpleSection) write(w *writer) {
 	w.U32(s.sz)
 }
 
-// compoundSection is a range of bytes containg a list of variable
+// compoundSection is a range of bytes containing a list of variable
 // sized items.
 type compoundSection struct {
 	data simpleSection

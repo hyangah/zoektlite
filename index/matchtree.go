@@ -757,7 +757,7 @@ func (t *andMatchTree) matches(cp *contentProvider, cost int, known map[matchTre
 	for _, ch := range t.children {
 		switch evalMatchTree(cp, cost, known, ch) {
 		case matchesRequiresHigherCost:
-			// keep evaluating other children incase we come across matchesNone
+			// keep evaluating other children in case we come across matchesNone
 			state = matchesRequiresHigherCost
 		case matchesFound:
 			// will return this if every child has this value
@@ -1436,7 +1436,7 @@ func isRegexpAll(r *syntax.Regexp) bool {
 			return r.Sub[0].Op == syntax.OpAnyChar || r.Sub[0].Op == syntax.OpAnyCharNotNL
 		}
 
-		// Strip away expressions being wrapped in paranthesis
+		// Strip away expressions being wrapped in parentheses
 		if (r.Op == syntax.OpCapture || r.Op == syntax.OpConcat) && len(r.Sub) == 1 {
 			r = r.Sub[0]
 			continue

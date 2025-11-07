@@ -229,7 +229,7 @@ func verify(repo *zoekt.Repository) error {
 func urlJoinPath(base string, elem ...string) string {
 	// golangs html/template always escapes "+" appearing in an HTML attribute
 	// [1]. We may even want to treat more characters, differently but this
-	// atleast makes it possible to visit URLs like [2].
+	// at least makes it possible to visit URLs like [2].
 	//
 	// We only do this to elem since base will normally be a hardcoded string.
 	//

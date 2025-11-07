@@ -339,9 +339,8 @@ func (o *Options) IndexState() (IndexState, string) {
 		return IndexStateCorrupt, fn
 	}
 
-	// TODO(hakim)
 	if repo.IndexOptions != o.GetHash() {
-		//	return IndexStateOption, fn
+		return IndexStateOption, fn
 	}
 
 	if !reflect.DeepEqual(repo.Branches, o.RepositoryDescription.Branches) {
@@ -636,7 +635,7 @@ func (b *Builder) Finish() error {
 
 			tempPath, finalPath, err := JsonMarshalRepoMetaTemp(shard, repository)
 			if err != nil {
-				return fmt.Errorf("writing repository metadta for shard %q: %w", shard, err)
+				return fmt.Errorf("writing repository metadata for shard %q: %w", shard, err)
 			}
 
 			artifactPaths[tempPath] = finalPath

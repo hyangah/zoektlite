@@ -195,7 +195,7 @@ func (t *indexTOC) sectionsTaggedList() []taggedSection {
 }
 
 // sectionsTaggedCompatibilityList returns a list of sections that will be
-// handled or converted for backwards compatiblity, but aren't written by
+// handled or converted for backwards compatibility, but aren't written by
 // the current iteration of the indexer.
 func (t *indexTOC) sectionsTaggedCompatibilityList() []taggedSection {
 	return []taggedSection{}

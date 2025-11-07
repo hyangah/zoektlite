@@ -498,7 +498,7 @@ func (d *indexData) newBtreeIndex(ngramSec simpleSection, postings compoundSecti
 
 func (d *indexData) verify() error {
 	// This is not an exhaustive check: the postings can easily
-	// generate OOB acccesses, and are expensive to check, but this lets us rule out
+	// generate OOB accesses, and are expensive to check, but this lets us rule out
 	// other sources of OOB access.
 	n := len(d.fileNameIndex)
 	if n == 0 {
