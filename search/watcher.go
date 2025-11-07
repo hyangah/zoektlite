@@ -164,7 +164,7 @@ func (s *DirectoryWatcher) scan() error {
 
 	var toLoad []string
 	for k, mtime := range ts {
-		if t, ok := s.timestamps[k]; !ok || t != mtime {
+		if t, ok := s.timestamps[k]; !ok || !t.Equal(mtime) {
 			toLoad = append(toLoad, k)
 			s.timestamps[k] = mtime
 		}
